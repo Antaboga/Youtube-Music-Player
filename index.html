@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title> Youtube music player #4</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Search and Player</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            color: white;
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+            overflow: hidden; /* Pastikan elemen hujan tidak menyebabkan scroll */
+        }
+
+        h1 {
+            font-size: 3rem;
+            letter-spacing: 2px;
+            color: #1a237e;
+            margin-bottom: 20px;
+        }
+
+        #searchForm {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 15px;
+            width: 350px;
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            font-size: 1.2rem;
+            text-align: center;
+            outline: none;
+            color: #1a237e;
+        }
+
+        button {
+            padding: 15px 30px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #1565c0;
+            box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        #results {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 700px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .result-item:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .result-item img {
+            width: 80px;
+            height: 80px;
+            margin-right: 20px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .result-item h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #f1f1f1;
+        }
+
+        .result-item p {
+            margin: 5px 0 0;
+            font-size: 0.9rem;
+            color: #b3b3b3;
+        }
+
+        iframe {
+            width: 80%;
+            height: 450px;
+            margin-top: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 6px 25px rgba(0, 0, 0, 0.5);
+            background-color: #fff;
+            display: none;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #1e88e5;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #1565c0;
+        }
+
+        /* Hujan effect */
+        .rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .drop {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            animation: fall linear infinite;
+        }
+
+        /* Animasi hujan */
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Music Search & Player</h1>
+
+    <!-- Form pencarian -->
+    <form id="searchForm">
+        <input type="text" id="query" placeholder="Cari lagu atau artis..." />
+        <button type="submit">Cari</button>
+    </form>
+
+    <!-- Tempat untuk menampilkan hasil pencarian -->
+    <div id="results"></div>
+
+    <!-- Pemutar video YouTube -->
+    <iframe id="youtubePlayer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+    <!-- Elemen hujan -->
+    <div class="rain"></div>
+
+    <script>
+        const API_KEY = 'AIzaSyBGYg39UZ4Zz2O4ePPw6IfTKpKfREaFSZ0';
+
+        // Fungsi untuk mencari musik di YouTube
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = document.getElementById('query').value;
+            searchMusic(query);
+        });
+
+        function searchMusic(query) {
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(query)}&key=${API_KEY}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data.items);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Fungsi untuk menampilkan hasil pencarian
+        function displayResults(videos) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            videos.forEach(video => {
+                const videoId = video.id.videoId;
+                const thumbnail = video.snippet.thumbnails.default.url;
+                const title = video.snippet.title;
+
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.innerHTML = `
+                    <img src="${thumbnail}" alt="${title}">
+                    <div>
+                        <h4>${title}</h4>
+                        <button onclick="playMusic('${videoId}')">Putar</button>
+                    </div>
+                `;
+
+                resultsDiv.appendChild(resultItem);
+            });
+        }
+
+        // Fungsi untuk memutar musik menggunakan YouTube Iframe Player
+        function playMusic(videoId) {
+            const youtubePlayer = document.getElementById('youtubePlayer');
+            youtubePlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            youtubePlayer.style.display = 'block';
+        }
+
+        // Membuat tetesan hujan
+        function createRain() {
+            const rainContainer = document.querySelector('.rain');
+            const numDrops = 100;  // jumlah tetesan hujan
+
+            for (let i = 0; i < numDrops; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'drop';
+                drop.style.left = `${Math.random() * 100}vw`;  // Posisi acak di horizontal
+                drop.style.animationDuration = `${Math.random() * 2 + 2}s`;  // Durasi acak
+                drop.style.animationDelay = `${Math.random() * 2}s`;  // Delay acak
+                rainContainer.appendChild(drop);
+            }
+        }
+
+        // Inisialisasi hujan
+        createRain();
+    </script>
+
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
